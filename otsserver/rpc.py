@@ -11,11 +11,9 @@
 
 import binascii
 import http.server
-import os
 import socketserver
-import threading
-import time
-
+import json
+import logging
 import bitcoin.core
 
 from opentimestamps.core.serialize import StreamSerializationContext
@@ -165,16 +163,69 @@ This address changes after every donation.
 
         elif self.path.startswith('/timestamp/'):
             self.get_timestamp()
-
+        elif self.path.startswith('/insight-api/block/'):
+            try:
+                block = self.get_block_from_hash(self.path[len('/insight-api/block/'):])
+                self.write_block_header(block)
+            except Exception as err:
+                logging.error(err)
+                self.send_response(500)
+        elif self.path.startswith('/insight-api/block-index/'):
+            try:
+                block_hash = self.get_block_hash_from_height(self.path[len('/insight-api/block-index/'):])
+                self.write_block_hash(block_hash)
+            except Exception as err:
+                logging.error(err)
+                self.send_response(500)
+        elif self.path.startswith('/insight-api/block-from-index/'):
+            try:
+                block_hash = self.get_block_hash_from_height(self.path[len('/insight-api/block-from-index/'):])
+                block = self.get_block_from_hash(block_hash['blockHash'])
+                self.write_block_header(block)
+            except Exception as err:
+                logging.error(err)
+                self.send_response(500)
         else:
             self.send_response(404)
             self.send_header('Content-type', 'text/plain')
-
             # a 404 is only going to become not a 404 if the server is upgraded
             self.send_header('Cache-Control', 'public, max-age=3600')
-
             self.end_headers()
             self.wfile.write(b'Not found')
+
+    def write_block_hash(self, block_hash):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(block_hash).encode('utf-8'))
+
+    def write_block_header(self, block):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Cache-Control', 'public, max-age=3600')
+        self.end_headers()
+        self.wfile.write(json.dumps(block).encode('utf-8'))
+
+    @staticmethod
+    def get_block_from_hash(block_hash):
+        proxy = bitcoin.rpc.Proxy()
+        getblockheader = proxy.getblockheader(bytes.fromhex(block_hash)[::-1])
+        result = {
+            'merkleroot': bytes.hex(getblockheader.hashMerkleRoot[::-1]),
+            'time':getblockheader.nTime,
+            'hashPrevBlock' : bytes.hex(getblockheader.hashPrevBlock[::-1]),
+            'nonce':getblockheader.nNonce,
+            'version':getblockheader.nVersion
+        }
+
+        return result
+
+    @staticmethod
+    def get_block_hash_from_height(block_height):
+        proxy = bitcoin.rpc.Proxy()
+        getblockhash = proxy.getblockhash(int(block_height))
+        result = {'blockHash': bytes.hex(getblockhash[::-1])}
+        return result
 
 
 class StampServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
