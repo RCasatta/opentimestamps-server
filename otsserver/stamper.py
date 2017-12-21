@@ -241,10 +241,12 @@ class Stamper:
                 # Must have been a reorg or something, return
                 logging.error("Failed to get block")
                 return
+            serialized_block=block.serialize()
 
+            logging.info("Start checking all potential pending txs against this block")
             # Check all potential pending txs against this block.
             for unconfirmed_tx in self.unconfirmed_txs:
-                block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height)
+                block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height, serialized_block=serialized_block)
 
                 if block_timestamp is None:
                     continue
@@ -276,6 +278,7 @@ class Stamper:
                 self.last_timestamp_tx = time.time()
 
                 break
+            logging.info("Finished checking digest of all unconfirmed in this block")
 
 
         time_to_next_tx = int(self.last_timestamp_tx + self.min_tx_interval - time.time())
