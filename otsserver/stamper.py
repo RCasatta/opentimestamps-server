@@ -365,6 +365,7 @@ class Stamper:
                 logging.info("Sent timestamp tx %s; %d total commitments" % (b2lx(sent_tx.GetHash()), len(commitment_timestamps)))
 
             self.unconfirmed_txs.append(UnconfirmedTimestampTx(sent_tx, tip_timestamp, len(commitment_timestamps)))
+            self.last_tip = tip_timestamp
 
     def __loop(self):
         logging.info("Starting stamper loop")
@@ -446,6 +447,6 @@ class Stamper:
         self.txs_waiting_for_confirmation = {}
 
         self.last_timestamp_tx = 0
-
+        self.last_tip = None
         self.thread = threading.Thread(target=self.__loop)
         self.thread.start()
