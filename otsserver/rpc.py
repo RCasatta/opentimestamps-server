@@ -144,10 +144,10 @@ class RPCRequestHandler(http.server.BaseHTTPRequestHandler):
             welcome_page = """\
 <html>
 <head>
-    <title>OpenTimestamps Calendar Server</title>
+    <title>OpenTimestamps Testnet Calendar Server</title>
 </head>
 <body>
-<p>This is an <a href="https://opentimestamps.org">OpenTimestamps</a> <a href="https://github.com/opentimestamps/opentimestamps-server">Calendar Server</a> (v%s)</p>
+<p>This is an <a href="https://opentimestamps.org">OpenTimestamps</a> <a href="https://github.com/opentimestamps/opentimestamps-server">Calendar Server in Testnet</a> (v%s)</p>
 
 <p>
 Pending commitments: %d</br>
@@ -156,7 +156,7 @@ Most recent timestamp tx: %s (%d prior versions)</br>
 Most recent merkle tree tip: %s</br>
 Best-block: %s, height %d</br>
 </br>
-Wallet balance: %s BTC</br>
+Wallet balance: %s testnet BTC</br>
 </p>
 
 <p>
