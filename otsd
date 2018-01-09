@@ -74,6 +74,9 @@ parser.add_argument("--btc-max-fee", metavar='FEE', type=float,
 parser.add_argument("--btc-change-script", metavar='HEX', type=str,
                     default=None,
                     help="Script to use for change output")
+parser.add_argument("--btc-testnet-broadcast-ratio", type=float,
+                    default=0.10,
+                    help="Probability ratio to broadcast a tx in tesnet")
 
 btc_net_group = parser.add_mutually_exclusive_group()
 btc_net_group.add_argument('--btc-testnet', dest='btc_net', action='store_const',
@@ -133,7 +136,8 @@ stamper = otsserver.stamper.Stamper(calendar, exit_event,
                                     args.btc_max_fee * bitcoin.core.COIN,
                                     args.max_pending,
                                     args.btc_change_script,
-                                    args.btc_net)
+                                    args.btc_net,
+                                    args.btc_testnet_broadcast_ratio)
 
 calendar.stamper = stamper
 
