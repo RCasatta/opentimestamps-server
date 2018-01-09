@@ -353,7 +353,7 @@ class Stamper:
                     if self.btc_net == 'mainnet' or (self.btc_net == 'testnet' and random.random() < self.btc_testnet_broadcast_ratio):
                         txid = proxy.sendrawtransaction(signed_tx)
                     else:
-                        logging.debug("I am not broadcasting the tx to better emulate testnet")
+                        logging.debug("I am not broadcasting the tx to better emulate testnet ratio is (%f)", self.btc_testnet_broadcast_ratio )
 
                 except bitcoin.rpc.JSONRPCError as err:
                     if err.error['code'] == -26:
