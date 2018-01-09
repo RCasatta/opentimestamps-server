@@ -132,7 +132,8 @@ stamper = otsserver.stamper.Stamper(calendar, exit_event,
                                     args.btc_min_tx_interval,
                                     args.btc_max_fee * bitcoin.core.COIN,
                                     args.max_pending,
-                                    args.btc_change_script)
+                                    args.btc_change_script,
+                                    args.btc_net)
 
 calendar.stamper = stamper
 

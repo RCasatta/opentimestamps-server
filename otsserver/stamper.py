@@ -30,6 +30,7 @@ from opentimestamps.core.timestamp import Timestamp, make_merkle_tree
 from opentimestamps.timestamp import nonce_timestamp
 
 from otsserver.calendar import Journal
+import random
 
 KnownBlock = collections.namedtuple('KnownBlock', ['height', 'hash'])
 TimestampTx = collections.namedtuple('TimestampTx', ['tx', 'tip_timestamp', 'commitment_timestamps'])
@@ -348,7 +349,9 @@ class Stamper:
                 signed_tx = r['tx']
 
                 try:
-                    txid = proxy.sendrawtransaction(signed_tx)
+                    if self.btc_net == 'mainnet' or (self.btc_net == 'testnet' and random.random() < 0.1):
+                        txid = proxy.sendrawtransaction(signed_tx)
+                        logging.debug("broadcasting " + txid)
                 except bitcoin.rpc.JSONRPCError as err:
                     if err.error['code'] == -26:
                         logging.debug("Err: %r" % err.error)
@@ -435,7 +438,7 @@ class Stamper:
             else:
                 return False
 
-    def __init__(self, calendar, exit_event, relay_feerate, min_confirmations, min_tx_interval, max_fee, max_pending, change_scriptPubKey):
+    def __init__(self, calendar, exit_event, relay_feerate, min_confirmations, min_tx_interval, max_fee, max_pending, change_scriptPubKey, btc_net):
         self.calendar = calendar
         self.exit_event = exit_event
 
@@ -452,6 +455,7 @@ class Stamper:
         self.mines = set()
         self.pending_commitments = OrderedSet()
         self.txs_waiting_for_confirmation = {}
+        self.btc_net = btc_net
 
         self.last_timestamp_tx = 0
         self.last_tip = None
