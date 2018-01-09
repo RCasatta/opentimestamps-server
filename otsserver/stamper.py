@@ -247,13 +247,14 @@ class Stamper:
             # we avoid this step for every unconfirmed tx
             serde_txs = []
             for tx in block.vtx:
-                serde_txs.append((tx, tx.serialize(params={'include_witness':False})))
+                serde_txs.append((tx, tx.serialize(params={'include_witness': False})))
 
             # Check all potential pending txs against this block.
             # iterating in reverse order to prioritize most recent digest which commits to a bigger merkle tree
             for (i, unconfirmed_tx) in enumerate(self.unconfirmed_txs[::-1]):
                 block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height,
-                                                            serde_txs=serde_txs)
+                                                            serde_txs=serde_txs,
+                                                            btc_net=self.btc_net)
 
                 if block_timestamp is None:
                     continue

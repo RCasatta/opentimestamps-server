@@ -11,7 +11,7 @@
 
 from opentimestamps.core.timestamp import Timestamp, cat_sha256d
 from opentimestamps.core.op import OpPrepend
-from opentimestamps.core.notary import BitcoinBlockHeaderAttestation
+from opentimestamps.core.notary import BitcoinBlockHeaderAttestation, BitcoinTestnetBlockHeaderAttestation
 
 
 def __make_btc_block_merkle_tree(blk_txids):
@@ -33,7 +33,7 @@ def __make_btc_block_merkle_tree(blk_txids):
     return digests[0]
 
 
-def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, serde_txs=None):
+def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, serde_txs=None, btc_net='bitcoin'):
     """Make a timestamp for a digest from a block
 
     Returns a timestamp for that digest on success, None on failure
@@ -94,7 +94,10 @@ def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, s
     # Make sure the merkleroot actually matches
     assert merkleroot_stamp.msg == block.hashMerkleRoot
 
-    attestation = BitcoinBlockHeaderAttestation(blockheight)
+    if btc_net == 'testnet':
+        attestation = BitcoinTestnetBlockHeaderAttestation(blockheight)
+    else:
+        attestation = BitcoinBlockHeaderAttestation(blockheight)
     merkleroot_stamp.attestations.add(attestation)
 
     return digest_timestamp
