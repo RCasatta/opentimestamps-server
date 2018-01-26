@@ -248,6 +248,7 @@ class Stamper:
             for tx in block.vtx:
                 serde_txs.append((tx, tx.serialize(params={'include_witness':False})))
 
+
             # Check all potential pending txs against this block.
             # iterating in reverse order to prioritize most recent digest which commits to a bigger merkle tree
             for (i, unconfirmed_tx) in enumerate(self.unconfirmed_txs[::-1]):
