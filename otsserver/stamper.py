@@ -278,8 +278,11 @@ class Stamper:
 
                 # Erasing all unconfirmed txs if the transaction was mine
                 if mined_tx.tx.GetTxid() in self.mines:
+                    logging.info("Tx was mine, deleting all my unconfirmed")
                     self.unconfirmed_txs.clear()
                     self.mines.clear()
+                else:
+                    logging.info("Tx was made by someone else, keeping my txs")
 
                 # And finally, we can reset the last time a timestamp
                 # transaction was mined to right now.
