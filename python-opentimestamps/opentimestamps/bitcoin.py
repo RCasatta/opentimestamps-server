@@ -8,6 +8,7 @@
 # No part of python-opentimestamps including this file, may be copied,
 # modified, propagated, or distributed except according to the terms contained
 # in the LICENSE file.
+from bitcoin.core import CTransaction
 
 from opentimestamps.core.timestamp import Timestamp, cat_sha256d
 from opentimestamps.core.op import OpPrepend
@@ -68,7 +69,7 @@ def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, s
         len_smallest_tx_found = len(serialized_tx)
 
     if len_smallest_tx_found > max_tx_size:
-        return None
+        return None, None
 
     digest_timestamp = Timestamp(digest)
 
@@ -89,7 +90,6 @@ def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, s
 
     # Build the merkle tree
     merkleroot_stamp = __make_btc_block_merkle_tree(block_txid_stamps)
-    assert merkleroot_stamp.msg == block.hashMerkleRoot
 
     # Make sure the merkleroot actually matches
     assert merkleroot_stamp.msg == block.hashMerkleRoot
@@ -97,4 +97,4 @@ def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, s
     attestation = BitcoinBlockHeaderAttestation(blockheight)
     merkleroot_stamp.attestations.add(attestation)
 
-    return digest_timestamp
+    return digest_timestamp, CTransaction.deserialize(serialized_tx)
