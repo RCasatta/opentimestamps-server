@@ -241,12 +241,18 @@ class Stamper:
                 # Must have been a reorg or something, return
                 logging.error("Failed to get block")
                 return
-            serialized_block=block.serialize()
 
-            logging.info("Start checking all potential pending txs against this block")
+            # the following is an optimization, by pre computing the serialization of tx
+            # we avoid this step for every unconfirmed tx
+            serde_txs = []
+            for tx in block.vtx:
+                serde_txs.append((tx, tx.serialize()))
+
             # Check all potential pending txs against this block.
-            for unconfirmed_tx in self.unconfirmed_txs:
-                block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height, serialized_block=serialized_block)
+            # iterating in reverse order to prioritize most recent digest which commits to a bigger merkle tree
+            for (i, unconfirmed_tx) in enumerate(self.unconfirmed_txs[::-1]):
+                block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height,
+                                                            serde_txs=serde_txs)
 
                 if block_timestamp is None:
                     continue
@@ -270,8 +276,10 @@ class Stamper:
                 # have been mined, and are waiting for confirmations.
                 self.txs_waiting_for_confirmation[block_height] = mined_tx
 
-                # Since all unconfirmed txs conflict with each other, we can clear the entire lot
-                self.unconfirmed_txs.clear()
+                # Erasing all unconfirmed txs if the transaction was mine
+                if mined_tx.tx.GetTxid() in self.mines:
+                    self.unconfirmed_txs.clear()
+                    self.mines.clear()
 
                 # And finally, we can reset the last time a timestamp
                 # transaction was mined to right now.
@@ -362,6 +370,8 @@ class Stamper:
                 logging.info("Sent timestamp tx %s; %d total commitments" % (b2lx(sent_tx.GetTxid()), len(commitment_timestamps)))
 
             self.unconfirmed_txs.append(UnconfirmedTimestampTx(sent_tx, tip_timestamp, len(commitment_timestamps)))
+            self.mines.add(sent_tx.GetTxid())
+            self.last_tip = tip_timestamp
 
     def __loop(self):
         logging.info("Starting stamper loop")
@@ -440,10 +450,11 @@ class Stamper:
 
         self.known_blocks = KnownBlocks()
         self.unconfirmed_txs = []
+        self.mines = set()
         self.pending_commitments = OrderedSet()
         self.txs_waiting_for_confirmation = {}
 
         self.last_timestamp_tx = 0
-
+        self.last_tip = None
         self.thread = threading.Thread(target=self.__loop)
         self.thread.start()
