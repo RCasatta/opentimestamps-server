@@ -21,15 +21,23 @@ import bitcoin.rpc
 class Test_make_timestamp_from_block(unittest.TestCase):
 
     def test_bench(self):
+        block = None
         try:
             proxy = bitcoin.rpc.Proxy()
             block = proxy.getblock(lx('0000000000000000001d34d4434c1223a5b9b7298714cafa85cb1b139b3d9f1b'))
-            digest = lx('0000000000000000001d34d4434c1223a5b9b7298714cafa85cb1b139b3d9f1b')
-            serialized_block = block.serialize()
-            for i in range(0,300):
-                root_stamp = make_timestamp_from_block(digest, block, 0, serialized_block=serialized_block)
         except:
             pass
+
+        if block is not None:
+            digest = lx('0000000000000000001d34d4434c1223a5b9b7298714cafa85cb1b139b3d9f1b')
+            serde_txs = []
+            for tx in block.vtx:
+                serde_txs.append((tx, tx.serialize()))
+            for i in range(0, 300):
+                root_stamp = make_timestamp_from_block(digest, block, 0, serde_txs=serde_txs)
+        else:
+            self.skipTest("bitcoin node not available")
+
 
     def test(self):
         # genesis block!
