@@ -49,7 +49,7 @@ def make_timestamp_from_block(digest, block, blockheight, *, max_tx_size=1000, s
     if serde_txs is None:
         serde_txs = []
         for tx in block.vtx:
-            serde_txs.append((tx, tx.serialize()))
+            serde_txs.append((tx, tx.serialize(params={'include_witness':False})))
 
     for (tx, serialized_tx) in serde_txs:
         if len(serialized_tx) > len_smallest_tx_found:
