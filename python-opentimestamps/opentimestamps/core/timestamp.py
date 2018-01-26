@@ -14,7 +14,7 @@ import binascii
 from bitcoin.core import CTransaction, SerializationError, b2lx, b2x
 
 from opentimestamps.core.op import Op, CryptOp, OpSHA256, OpAppend, OpPrepend, MsgValueError
-from opentimestamps.core.notary import TimeAttestation, BitcoinBlockHeaderAttestation
+from opentimestamps.core.notary import TimeAttestation, BitcoinBlockHeaderAttestation, BitcoinTestnetBlockHeaderAttestation
 
 import opentimestamps.core.serialize
 
@@ -233,6 +233,8 @@ class Timestamp:
                 r += " "*indent + "verify %s" % str(attestation) + str_result(verbosity, self.msg, None) + "\n"
                 if attestation.__class__ == BitcoinBlockHeaderAttestation:
                     r += " "*indent + "# Bitcoin block merkle root " + b2lx(self.msg) + "\n"
+                elif attestation.__class__ == BitcoinTestnetBlockHeaderAttestation:
+                    r += " " * indent + "# Bitcoin Testnet block merkle root " + b2lx(self.msg) + "\n"
 
         if len(self.ops) > 1:
             for op, timestamp in sorted(self.ops.items()):
