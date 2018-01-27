@@ -213,6 +213,7 @@ class Stamper:
         proxy = bitcoin.rpc.Proxy()
 
         new_blocks = self.known_blocks.update_from_proxy(proxy)
+        found_tx = None
 
         if new_blocks:
             logging.debug("pending_commitments: %s\nunconfirmed_txs:%s" % (str(self.pending_commitments),str(self.unconfirmed_txs)) )
@@ -302,7 +303,6 @@ class Stamper:
                 break
             logging.info("Finished checking digest of all unconfirmed in this block")
 
-
         time_to_next_tx = int(self.last_timestamp_tx + self.min_tx_interval - time.time())
         if time_to_next_tx > 0:
             # Minimum interval between transactions hasn't been reached, so do nothing
@@ -311,6 +311,8 @@ class Stamper:
 
         prev_tx = None
         if self.pending_commitments and not self.unconfirmed_txs:
+            logging.debug("I have pending and no unconfirmed_txs, first tx of this cycle")
+
             # Find the biggest unspent output that's confirmed
             unspent = find_unspent(proxy)
 
@@ -331,9 +333,11 @@ class Stamper:
             logging.debug('New timestamp tx, spending output %r, value %s' % (unspent[-1]['outpoint'], str_money_value(unspent[-1]['amount'])))
 
         elif self.unconfirmed_txs:
-            assert self.pending_commitments
+            logging.debug("I have unconfirmed_txs but no pending commitments")
+            assert self.pending_commitments  # why this, if I have no commitments in this cycle?
             (prev_tx, prev_tip_timestamp, prev_commitment_timestamps) = self.unconfirmed_txs[-1]
 
+        logging.debug("prev_tx is %s" % str(prev_tx))
         # Send the first transaction even if we don't have a new block
         if prev_tx and (new_blocks or not self.unconfirmed_txs):
             (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(len(self.pending_commitments))
