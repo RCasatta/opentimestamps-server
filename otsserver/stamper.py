@@ -341,7 +341,7 @@ class Stamper:
             assert self.pending_commitments  # why this, if I have no commitments in this cycle?
             (prev_tx, prev_tip_timestamp, prev_commitment_timestamps) = self.unconfirmed_txs[-1]
 
-        logging.debug("prev_tx is %s" % str(prev_tx.GetTxid()))
+        logging.debug("prev_tx is %s" % b2lx(prev_tx.GetTxid()))
         # Send the first transaction even if we don't have a new block
         if prev_tx and not self.unconfirmed_txs:
             (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(len(self.pending_commitments))
