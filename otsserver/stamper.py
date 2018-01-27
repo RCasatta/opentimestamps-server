@@ -218,7 +218,7 @@ class Stamper:
             return
 
         logging.debug("")
-        found_tx = None
+
         logging.debug("pending_commitments: %d\nunconfirmed_txs:%d"
                       % (len(self.pending_commitments),len(self.unconfirmed_txs)))
 
@@ -275,7 +275,7 @@ class Stamper:
 
                 # Success!
                 (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(unconfirmed_tx.n)
-                mined_tx = TimestampTx(unconfirmed_tx.tx, tip_timestamp, commitment_timestamps)
+                mined_tx = TimestampTx(found_tx, tip_timestamp, commitment_timestamps)
                 assert tip_timestamp.msg == unconfirmed_tx.tip_timestamp.msg
 
                 mined_tx.tip_timestamp.merge(block_timestamp)
@@ -293,7 +293,7 @@ class Stamper:
                 self.txs_waiting_for_confirmation[block_height] = mined_tx
 
                 # Erasing all unconfirmed txs if the transaction was mine
-                if found_tx.GetTxid() in self.mines:
+                if mined_tx.tx.GetTxid() in self.mines:
                     logging.info("Tx was mine, deleting all my unconfirmed")
                     self.unconfirmed_txs.clear()
                     self.mines.clear()
@@ -305,7 +305,8 @@ class Stamper:
                 self.last_timestamp_tx = time.time()
 
                 break
-            logging.info("Finished checking digest of all unconfirmed in this block")
+            if self.unconfirmed_txs:
+                logging.info("Finished checking digest of all unconfirmed in this block")
 
         time_to_next_tx = int(self.last_timestamp_tx + self.min_tx_interval - time.time())
         if time_to_next_tx > 0:
@@ -486,7 +487,7 @@ class Stamper:
         self.pending_commitments = OrderedSet()
         self.txs_waiting_for_confirmation = {}
         self.btc_net = btc_net
-        self.btc_broadcast_ratio = btc_broadcast_ratio;
+        self.btc_broadcast_ratio = btc_broadcast_ratio
 
         self.last_timestamp_tx = 0
         self.last_tip = None
