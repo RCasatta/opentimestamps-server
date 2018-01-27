@@ -213,10 +213,12 @@ class Stamper:
         proxy = bitcoin.rpc.Proxy()
 
         new_blocks = self.known_blocks.update_from_proxy(proxy)
-        found_tx = None
 
-        if new_blocks:
-            logging.debug("pending_commitments: %s\nunconfirmed_txs:%s" % (str(self.pending_commitments),str(self.unconfirmed_txs)) )
+        if not new_blocks:
+            return
+
+        found_tx = None
+        logging.debug("pending_commitments: %s\nunconfirmed_txs:%s" % (str(self.pending_commitments),str(self.unconfirmed_txs)) )
 
         for (block_height, block_hash) in new_blocks:
             logging.info("New block %s at height %d" % (b2lx(block_hash), block_height))
@@ -311,6 +313,7 @@ class Stamper:
 
         prev_tx = None
         if self.pending_commitments and not self.unconfirmed_txs:
+
             logging.debug("I have pending and no unconfirmed_txs, first tx of this cycle")
 
             # Find the biggest unspent output that's confirmed
@@ -337,10 +340,10 @@ class Stamper:
             assert self.pending_commitments  # why this, if I have no commitments in this cycle?
             (prev_tx, prev_tip_timestamp, prev_commitment_timestamps) = self.unconfirmed_txs[-1]
 
-        if new_blocks:
-            logging.debug("prev_tx is %s" % str(prev_tx))
+
+        logging.debug("prev_tx is %s" % str(prev_tx))
         # Send the first transaction even if we don't have a new block
-        if prev_tx and (new_blocks or not self.unconfirmed_txs):
+        if prev_tx and not self.unconfirmed_txs:
             (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(len(self.pending_commitments))
 
             # make_merkle_tree() seems to take long enough on really big adds
