@@ -219,7 +219,7 @@ class Stamper:
 
         found_tx = None
         logging.debug("pending_commitments: %d\nunconfirmed_txs:%d"
-                      % len(self.pending_commitments),len(self.unconfirmed_txs))
+                      % (len(self.pending_commitments),len(self.unconfirmed_txs)))
 
         for (block_height, block_hash) in new_blocks:
             logging.info("New block %s at height %d" % (b2lx(block_hash), block_height))
