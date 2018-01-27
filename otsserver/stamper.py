@@ -336,8 +336,8 @@ class Stamper:
 
             logging.debug('New timestamp tx, spending output %r, value %s' % (unspent[-1]['outpoint'], str_money_value(unspent[-1]['amount'])))
 
-        elif self.unconfirmed_txs:
-            logging.debug("I have unconfirmed_txs but no pending commitments")
+        elif self.unconfirmed_txs and self.pending_commitments:
+            logging.debug("I have unconfirmed_txs and pending commitments")
             assert self.pending_commitments  # why this, if I have no commitments in this cycle?
             (prev_tx, prev_tip_timestamp, prev_commitment_timestamps) = self.unconfirmed_txs[-1]
 
