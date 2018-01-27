@@ -214,7 +214,8 @@ class Stamper:
 
         new_blocks = self.known_blocks.update_from_proxy(proxy)
 
-        logging.debug("pending_commitments: %s\nunconfirmed_txs:%s" % (str(self.pending_commitments),str(self.unconfirmed_txs)) )
+        if not new_blocks:
+            logging.debug("pending_commitments: %s\nunconfirmed_txs:%s" % (str(self.pending_commitments),str(self.unconfirmed_txs)) )
 
         for (block_height, block_hash) in new_blocks:
             logging.info("New block %s at height %d" % (b2lx(block_hash), block_height))
