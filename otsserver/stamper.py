@@ -252,8 +252,11 @@ class Stamper:
             # Check all potential pending txs against this block.
             # iterating in reverse order to prioritize most recent digest which commits to a bigger merkle tree
             for (i, unconfirmed_tx) in enumerate(self.unconfirmed_txs[::-1]):
-                block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height,
-                                                            serde_txs=serde_txs)
+                (block_timestamp, found_tx) = make_timestamp_from_block(
+                    unconfirmed_tx.tip_timestamp.msg,
+                    block,
+                    block_height,
+                    serde_txs=serde_txs)
 
                 if block_timestamp is None:
                     continue
