@@ -137,7 +137,7 @@ stamper = otsserver.stamper.Stamper(calendar, exit_event,
                                     args.max_pending,
                                     args.btc_change_script,
                                     args.btc_net,
-                                    args.btc_testnet_broadcast_ratio)
+                                    args.btc_broadcast_ratio)
 
 calendar.stamper = stamper
 

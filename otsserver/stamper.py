@@ -358,10 +358,10 @@ class Stamper:
                 signed_tx = r['tx']
 
                 try:
-                    if self.btc_net == 'mainnet' or (self.btc_net != 'mainnet' and random.random() < self.btc_testnet_broadcast_ratio):
+                    if self.btc_net == 'mainnet' or (self.btc_net != 'mainnet' and random.random() < self.btc_broadcast_ratio):
                         txid = proxy.sendrawtransaction(signed_tx)
                     else:
-                        logging.debug("I am not broadcasting the tx to better emulate testnet ratio is (%f)", self.btc_testnet_broadcast_ratio )
+                        logging.debug("I am not broadcasting the tx to better emulate testnet ratio is (%f)", self.btc_broadcast_ratio)
 
                 except bitcoin.rpc.JSONRPCError as err:
                     if err.error['code'] == -26:
@@ -449,7 +449,7 @@ class Stamper:
             else:
                 return False
 
-    def __init__(self, calendar, exit_event, relay_feerate, min_confirmations, min_tx_interval, max_fee, max_pending, change_scriptPubKey):
+    def __init__(self, calendar, exit_event, relay_feerate, min_confirmations, min_tx_interval, max_fee, max_pending, change_scriptPubKey, btc_net, btc_broadcast_ratio):
         self.calendar = calendar
         self.exit_event = exit_event
 
@@ -467,7 +467,7 @@ class Stamper:
         self.pending_commitments = OrderedSet()
         self.txs_waiting_for_confirmation = {}
         self.btc_net = btc_net
-        self.btc_testnet_broadcast_ratio = btc_testnet_broadcast_ratio;
+        self.btc_broadcast_ratio = btc_broadcast_ratio;
 
         self.last_timestamp_tx = 0
         self.last_tip = None
