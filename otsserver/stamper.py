@@ -217,6 +217,7 @@ class Stamper:
         if not new_blocks:
             return
 
+        logging.debug("")
         found_tx = None
         logging.debug("pending_commitments: %d\nunconfirmed_txs:%d"
                       % (len(self.pending_commitments),len(self.unconfirmed_txs)))
@@ -346,6 +347,7 @@ class Stamper:
         if prev_tx:
             logging.debug("prev_tx is %s" % b2lx(prev_tx.GetTxid()))
             (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(len(self.pending_commitments))
+            logging.debug("New tip is %s" % b2x(tip_timestamp.msg))
 
             # make_merkle_tree() seems to take long enough on really big adds
             # that the proxy dies
