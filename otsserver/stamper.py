@@ -30,6 +30,7 @@ from opentimestamps.core.timestamp import Timestamp, make_merkle_tree
 from opentimestamps.timestamp import nonce_timestamp
 
 from otsserver.calendar import Journal
+import random
 
 KnownBlock = collections.namedtuple('KnownBlock', ['height', 'hash'])
 TimestampTx = collections.namedtuple('TimestampTx', ['tx', 'tip_timestamp', 'commitment_timestamps'])
@@ -246,14 +247,14 @@ class Stamper:
             # we avoid this step for every unconfirmed tx
             serde_txs = []
             for tx in block.vtx:
-                serde_txs.append((tx, tx.serialize(params={'include_witness':False})))
-
+                serde_txs.append((tx, tx.serialize(params={'include_witness': False})))
 
             # Check all potential pending txs against this block.
             # iterating in reverse order to prioritize most recent digest which commits to a bigger merkle tree
             for (i, unconfirmed_tx) in enumerate(self.unconfirmed_txs[::-1]):
-                (block_timestamp, found_tx) = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height,
-                                                            serde_txs=serde_txs)
+                block_timestamp = make_timestamp_from_block(unconfirmed_tx.tip_timestamp.msg, block, block_height,
+                                                            serde_txs=serde_txs,
+                                                            btc_net=self.btc_net)
 
                 if block_timestamp is None:
                     continue
@@ -357,7 +358,11 @@ class Stamper:
                 signed_tx = r['tx']
 
                 try:
-                    txid = proxy.sendrawtransaction(signed_tx)
+                    if self.btc_net == 'mainnet' or (self.btc_net != 'mainnet' and random.random() < self.btc_testnet_broadcast_ratio):
+                        txid = proxy.sendrawtransaction(signed_tx)
+                    else:
+                        logging.debug("I am not broadcasting the tx to better emulate testnet ratio is (%f)", self.btc_testnet_broadcast_ratio )
+
                 except bitcoin.rpc.JSONRPCError as err:
                     if err.error['code'] == -26:
                         logging.debug("Err: %r" % err.error)
@@ -461,6 +466,8 @@ class Stamper:
         self.mines = set()
         self.pending_commitments = OrderedSet()
         self.txs_waiting_for_confirmation = {}
+        self.btc_net = btc_net
+        self.btc_testnet_broadcast_ratio = btc_testnet_broadcast_ratio;
 
         self.last_timestamp_tx = 0
         self.last_tip = None
