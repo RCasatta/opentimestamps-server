@@ -342,8 +342,8 @@ class Stamper:
             (prev_tx, prev_tip_timestamp, prev_commitment_timestamps) = self.unconfirmed_txs[-1]
 
 
-        # Send the first transaction
-        if prev_tx and not self.unconfirmed_txs:
+        # Send the transaction
+        if prev_tx:
             logging.debug("prev_tx is %s" % b2lx(prev_tx.GetTxid()))
             (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(len(self.pending_commitments))
 
@@ -400,6 +400,8 @@ class Stamper:
             self.unconfirmed_txs.append(UnconfirmedTimestampTx(sent_tx, tip_timestamp, len(commitment_timestamps)))
             self.mines.add(sent_tx.GetTxid())
             self.last_tip = tip_timestamp
+        else:
+            logging.debug("prev_tx is None")
 
     def __loop(self):
         logging.info("Starting stamper loop")
