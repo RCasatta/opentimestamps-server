@@ -214,6 +214,8 @@ class Stamper:
 
         new_blocks = self.known_blocks.update_from_proxy(proxy)
 
+        logging.debug("pending_commitments: %s\nunconfirmed_txs:%s" % (str(self.pending_commitments),str(self.unconfirmed_txs)) )
+
         for (block_height, block_hash) in new_blocks:
             logging.info("New block %s at height %d" % (b2lx(block_hash), block_height))
 
@@ -363,7 +365,7 @@ class Stamper:
                     if self.btc_net == 'mainnet' or (self.btc_net != 'mainnet' and random.random() < self.btc_broadcast_ratio):
                         txid = proxy.sendrawtransaction(signed_tx)
                     else:
-                        logging.info("I am not broadcasting %s the tx to emulate mainnet low wee. Ratio is (%f)" % (b2lx(signed_tx.GetTxid()), self.btc_broadcast_ratio))
+                        logging.info("I am not broadcasting %s to emulate mainnet fees. Broadcast ratio is (%f)" % (b2lx(signed_tx.GetTxid()), self.btc_broadcast_ratio))
 
                 except bitcoin.rpc.JSONRPCError as err:
                     if err.error['code'] == -26:
