@@ -342,7 +342,7 @@ class Stamper:
             (prev_tx, prev_tip_timestamp, prev_commitment_timestamps) = self.unconfirmed_txs[-1]
 
         logging.debug("prev_tx is %s" % b2lx(prev_tx.GetTxid()))
-        # Send the first transaction even if we don't have a new block
+        # Send the first transaction
         if prev_tx and not self.unconfirmed_txs:
             (tip_timestamp, commitment_timestamps) = self.__pending_to_merkle_tree(len(self.pending_commitments))
 
@@ -371,10 +371,11 @@ class Stamper:
                 signed_tx = r['tx']
 
                 try:
-                    if self.btc_net == 'mainnet' or (self.btc_net != 'mainnet' and random.random() < self.btc_broadcast_ratio):
+                    rand = random.random()
+                    if self.btc_net == 'mainnet' or (self.btc_net != 'mainnet' and rand < self.btc_broadcast_ratio):
                         txid = proxy.sendrawtransaction(signed_tx)
                     else:
-                        logging.info("I am not broadcasting %s to emulate mainnet fees. Broadcast ratio is (%f)" % (b2lx(signed_tx.GetTxid()), self.btc_broadcast_ratio))
+                        logging.info("I am not broadcasting %s to emulate mainnet fees. (%f/%f)" % (b2lx(signed_tx.GetTxid()), rand, self.btc_broadcast_ratio))
 
                 except bitcoin.rpc.JSONRPCError as err:
                     if err.error['code'] == -26:
