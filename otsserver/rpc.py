@@ -225,6 +225,10 @@ Latest transactions: </br>
     {{txid}} </br>
 {{/transactions}}
 </p>
+
+<p>
+{{lightning_invoice}}
+</p>
 </body>
 </html>"""
 
@@ -241,10 +245,10 @@ Latest transactions: </br>
               'transactions': transactions[:5],
               'time_between_transactions': time_between_transactions,
               'fees_in_last_week': fees_in_last_week,
+              'lightning_invoice': self.lightning_invoice,
             }
             welcome_page = renderer.render(homepage_template, stats)
             self.wfile.write(str.encode(welcome_page))
-
 
         elif self.path.startswith('/timestamp/'):
             self.get_timestamp()
@@ -264,7 +268,7 @@ Latest transactions: </br>
 
 
 class StampServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
-    def __init__(self, server_address, aggregator, calendar):
+    def __init__(self, server_address, aggregator, calendar, lightning_invoice):
         class rpc_request_handler(RPCRequestHandler):
             pass
         rpc_request_handler.aggregator = aggregator
@@ -274,6 +278,7 @@ class StampServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         rpc_request_handler.backup = Backup(journal, calendar, calendar.path + '/backup_cache')
 
         super().__init__(server_address, rpc_request_handler)
+        self.lightning_invoice = lightning_invoice
 
     def serve_forever(self):
         super().serve_forever()
