@@ -213,9 +213,9 @@ This address changes after every donation.
 <p>
 Average time between transactions in the last week: {{ time_between_transactions }} </br>
 Fees used in the last week: {{ fees_in_last_week }} BTC</br>
-Latest transactions: </br>
+Latest transactions (confirmations): </br>
 {{#transactions}}
-    {{txid}} </br>
+    {{txid}} ({{confirmations}})</br>
 {{/transactions}}
 </p>
 </body>
@@ -231,7 +231,7 @@ Latest transactions: </br>
               'block_height': proxy.getblockcount(),
               'balance': str_wallet_balance,
               'address': proxy._call("getaccountaddress",""),
-              'transactions': transactions[:5],
+              'transactions': transactions[:10],
               'time_between_transactions': time_between_transactions,
               'fees_in_last_week': fees_in_last_week,
             }
