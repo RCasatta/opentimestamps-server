@@ -269,6 +269,9 @@ class AskBackup(threading.Thread):
                 time.sleep(SLEEP_SECS)
                 continue
             request_elapsed = time.perf_counter() - request_start
+            response_headers_elapsed = r.elapsed.total_seconds()
+            response_body_elapsed = request_elapsed - response_headers_elapsed
+            proxy_cache_status = r.headers.get('x-proxy-cache', 'unknown')
 
             if r.status_code != 200:
                 logging.info("%s not found, sleeping for %d seconds" % (backup_url, SLEEP_SECS))
@@ -356,10 +359,14 @@ class AskBackup(threading.Thread):
 
             elapsed_time = time.perf_counter() - start_time
             logging.info(
-                "Took %.2fs for %s: request=%.2fs decode=%.2fs bitcoin=%.2fs "
-                "(cache hits=%d misses=%d) ops=%.2fs batch=%.2fs write=%.2fs "
-                "items=%d attestations=%d ops_count=%d",
-                elapsed_time, str(backup_url), request_elapsed, decode_elapsed,
-                bitcoin_elapsed, header_cache_hits, header_cache_misses,
-                ops_elapsed, batch_elapsed, write_elapsed, len(kv_map),
-                len(attestations), len(ops))
+                "Took %.2fs for %s: request=%.2fs (headers=%.2fs body=%.2fs "
+                "proxy_cache=%s bytes=%d) decode=%.2fs bitcoin=%.2fs "
+                "(header cache hits=%d misses=%d) ops=%.2fs batch=%.2fs "
+                "write=%.2fs items=%d attestations=%d ops_count=%d",
+                elapsed_time, str(backup_url), request_elapsed,
+                response_headers_elapsed, response_body_elapsed,
+                proxy_cache_status, len(r.content), decode_elapsed,
+                bitcoin_elapsed,
+                header_cache_hits, header_cache_misses, ops_elapsed,
+                batch_elapsed, write_elapsed, len(kv_map), len(attestations),
+                len(ops))
