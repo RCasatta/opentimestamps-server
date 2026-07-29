@@ -257,9 +257,10 @@ class AskBackup(threading.Thread):
         block_headers = {}
 
         while True:
-            start_time = time.time()
+            start_time = time.perf_counter()
             backup_url = urljoin(self.calendar_url, "/experimental/backup/%d" % (last_known + 1))
             logging.debug("Asking " + str(backup_url))
+            request_start = time.perf_counter()
             try:
                 r = requests.get(backup_url)
             except Exception as err:
@@ -267,12 +268,14 @@ class AskBackup(threading.Thread):
                               % (str(backup_url), str(err), SLEEP_SECS))
                 time.sleep(SLEEP_SECS)
                 continue
+            request_elapsed = time.perf_counter() - request_start
 
             if r.status_code != 200:
                 logging.info("%s not found, sleeping for %d seconds" % (backup_url, SLEEP_SECS))
                 time.sleep(SLEEP_SECS)
                 continue
 
+            decode_start = time.perf_counter()
             kv_map = Backup.bytes_to_kv_map(r.content)
             attestations = {}
             ops = {}
@@ -287,18 +290,25 @@ class AskBackup(threading.Thread):
                 for _b in range(ctx.read_varuint()):
                     op = Op.deserialize(ctx)
                     ops[key] = op
+            decode_elapsed = time.perf_counter() - decode_start
 
             # Verify all bitcoin attestation are valid
             logging.debug("Total attestations: " + str(len(attestations)))
+            bitcoin_start = time.perf_counter()
+            header_cache_hits = 0
+            header_cache_misses = 0
             for key, attestation in attestations.items():
                 if attestation.__class__ == BitcoinBlockHeaderAttestation:
                     while True:
                         try:
                             block_header = block_headers.get(attestation.height)
                             if block_header is None:
+                                header_cache_misses += 1
                                 blockhash = proxy.getblockhash(attestation.height)
                                 block_header = proxy.getblockheader(blockhash)
                                 block_headers[attestation.height] = block_header
+                            else:
+                                header_cache_hits += 1
                             # the following raise an exception and block computation if the attestation does not verify
                             attested_time = attestation.verify_against_blockheader(key, block_header)
                             logging.debug("Verifying " + b2x(key) + " result " + str(attested_time))
@@ -308,9 +318,11 @@ class AskBackup(threading.Thread):
                             block_headers.pop(attestation.height, None)
                             time.sleep(SLEEP_SECS)
                             proxy = bitcoin.rpc.Proxy()
+            bitcoin_elapsed = time.perf_counter() - bitcoin_start
 
             # verify all ops connects to an attestation
             logging.debug("Total ops: " + str(len(ops)))
+            ops_start = time.perf_counter()
             for key, op in ops.items():
                 current_key = key
                 current_op = op
@@ -322,11 +334,17 @@ class AskBackup(threading.Thread):
                     else:
                         break
                 assert next_key in attestations
+            ops_elapsed = time.perf_counter() - ops_start
 
+            batch_start = time.perf_counter()
             batch = leveldb.WriteBatch()
             for key, value in kv_map.items():
                 batch.Put(key, value)
+            batch_elapsed = time.perf_counter() - batch_start
+
+            write_start = time.perf_counter()
             self.db.db.Write(batch, sync=True)
+            write_elapsed = time.perf_counter() - write_start
 
             last_known = last_known + 1
             try:
@@ -336,5 +354,12 @@ class AskBackup(threading.Thread):
                 logging.error(str(exp))
                 break
 
-            elapsed_time = time.time() - start_time
-            logging.info("Took %ds for %s" % (elapsed_time, str(backup_url)))
+            elapsed_time = time.perf_counter() - start_time
+            logging.info(
+                "Took %.2fs for %s: request=%.2fs decode=%.2fs bitcoin=%.2fs "
+                "(cache hits=%d misses=%d) ops=%.2fs batch=%.2fs write=%.2fs "
+                "items=%d attestations=%d ops_count=%d",
+                elapsed_time, str(backup_url), request_elapsed, decode_elapsed,
+                bitcoin_elapsed, header_cache_hits, header_cache_misses,
+                ops_elapsed, batch_elapsed, write_elapsed, len(kv_map),
+                len(attestations), len(ops))
